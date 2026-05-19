@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import os
 import speech_recognition as sr
-from audio_recorder_streamlit import audio_recorder
+from streamlit_mic_recorder import mic_recorder
 import tempfile
 
 # =====================================================
@@ -169,13 +169,12 @@ for msg in st.session_state.messages:
 
 st.markdown("## 🎤 Voice Assistant (Push to Talk)")
 
-audio_bytes = audio_recorder(
-    text="🎙️ Click to Record",
-    recording_color="#ff0000",
-    neutral_color="#6aa36f",
-    icon_name="microphone",
-    icon_size="2x"
+_audio = mic_recorder(
+    start_prompt="🎙️ Click to Record",
+    stop_prompt="⏹️ Stop Recording",
+    key="mic_recorder"
 )
+audio_bytes = _audio["bytes"] if _audio else None
 
 # PROCESS ONLY WHEN BUTTON CLICKED
 if audio_bytes:
