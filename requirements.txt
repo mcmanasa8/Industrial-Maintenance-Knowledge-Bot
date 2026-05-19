@@ -1,0 +1,16 @@
+streamlit
+langchain
+langchain-community
+langchain-core
+langchainhub
+faiss-cpu
+pypdf
+sentence-transformers
+huggingface_hub
+python-dotenv
+requests
+streamlit
+pyarrow
+streamlit-mic-recorder
+speechrecognition
+pydub
