@@ -1,9 +1,10 @@
 import streamlit as st
-import requests
 import os
 import speech_recognition as sr
 from streamlit_mic_recorder import mic_recorder
 import tempfile
+from transformers import pipeline
+
 
 # =====================================================
 # PAGE CONFIG
@@ -44,15 +45,11 @@ h1, h2, h3, h4, h5, h6, p, span, label {
 </style>
 """, unsafe_allow_html=True)
 
-# =====================================================
-# OLLAMA CONFIG
-# =====================================================
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # =====================================================
 # SESSION STATE
 # =====================================================
+
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -90,8 +87,9 @@ with st.sidebar:
 
     model_name = st.selectbox(
         "🤖 Model",
-        ["phi3", "gemma:2b", "tinyllama"]
+        ["distilgpt2", "gpt2"]
     )
+
 
 # =====================================================
 # HEADER
@@ -121,39 +119,40 @@ Topic: {domain}
 """
 
 # =====================================================
-# OLLAMA FUNCTION
+# LLM FUNCTION (HuggingFace Transformers)
 # =====================================================
+
+@st.cache_resource
+def load_pipeline(model_id):
+    return pipeline("text-generation", model=model_id)
 
 def ask_llm(question):
 
     try:
-        prompt = f"""
-{system_prompt()}
+        prompt = f"""{system_prompt()}
 
 User Question:
 {question}
-"""
 
-        payload = {
-            "model": model_name,
-            "prompt": prompt,
-            "stream": False
-        }
+Answer:"""
 
-        response = requests.post(
-            OLLAMA_URL,
-            json=payload,
-            timeout=300
+        generator = load_pipeline(model_name)
+        result = generator(
+            prompt,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=0.7,
+            pad_token_id=50256
         )
-
-        if response.status_code != 200:
-            return f"❌ Ollama Error: {response.status_code}"
-
-        data = response.json()
-        return data.get("response", "❌ No response")
+        generated = result[0]["generated_text"]
+        # Return only the text after the prompt
+        answer = generated[len(prompt):].strip()
+        return answer if answer else "❌ No response generated."
 
     except Exception as e:
         return f"❌ Error: {str(e)}"
+
+
 
 # =====================================================
 # CHAT HISTORY
